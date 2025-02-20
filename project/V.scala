@@ -180,13 +180,13 @@ object V {
   def deprecatedScalaVersions = deprecatedScala2Versions
 
   val quickPublishScalaVersions = Set(
-    bazelScalaVersion,
-    scala211,
-    sbtScala,
-    scala212,
-    ammonite212Version,
+    // bazelScalaVersion,
+    // scala211,
+    // sbtScala,
+    // scala212,
+    // ammonite212Version,
     scala213,
-    ammonite213Version,
-    lastPublishedScala3,
+    // ammonite213Version,
+    // lastPublishedScala3,
   ).toList
 }

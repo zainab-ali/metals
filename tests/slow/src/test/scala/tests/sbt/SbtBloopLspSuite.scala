@@ -253,6 +253,30 @@ class SbtBloopLspSuite
       _ = assertNoDiff(client.workspaceDiagnostics, "")
     } yield ()
   }
+  test("new-dependency-import-build".only) {
+    cleanWorkspace()
+    client.importBuildChanges = ImportBuildChanges.yes
+
+    for {
+      _ <- initialize(
+        s"""|/project/build.properties
+            |sbt.version=$sbtVersion
+            |/build.sbt
+            |scalaVersion := "${V.scala213}"
+            |""".stripMargin
+      )
+      _ = assertStatus(_.isInstalled)
+      _ <- server.didOpen("build.sbt")
+      _ = assertNoDiff(client.workspaceDiagnostics, "")
+      _ <- server.didChange("build.sbt") { text =>
+        s"""$text
+           |libraryDependencies += "com.lihaoyi" %% "sourcecode" % "0.1.4"
+           |""".stripMargin
+      }
+      _ <- server.didSave("build.sbt")
+      _ = assertNoDiff(client.workspaceDiagnostics, "")
+    } yield ()
+  }
 
   test("cancel") {
     cleanWorkspace()
@@ -878,5 +902,4 @@ class SbtBloopLspSuite
          |            ^^^^^^^^^^^^^^^
          |""".stripMargin,
   )
-
 }

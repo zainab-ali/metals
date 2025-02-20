@@ -17,10 +17,10 @@ sealed abstract class WorkspaceLoadedStatus extends Product with Serializable {
   def isFailed: Boolean = this.isInstanceOf[Failed]
   def toChecksumStatus: Option[Status] =
     Option(this).collect {
-      case WorkspaceLoadedStatus.Rejected => Status.Rejected
-      case WorkspaceLoadedStatus.Installed => Status.Installed
-      case WorkspaceLoadedStatus.Cancelled => Status.Cancelled
-      case Failed(_) => Status.Failed
+      case Rejected => Status.Rejected
+      case Installed => Status.Installed
+      case Cancelled => Status.Cancelled
+      case _: Failed => Status.Failed
     }
 }
 object WorkspaceLoadedStatus {
@@ -30,5 +30,5 @@ object WorkspaceLoadedStatus {
   case object Unchanged extends WorkspaceLoadedStatus
   case object Installed extends WorkspaceLoadedStatus
   case object Cancelled extends WorkspaceLoadedStatus
-  case class Failed(exit: Int) extends WorkspaceLoadedStatus
+  case class Failed(exit: Int, stdout: String, stderr: String) extends WorkspaceLoadedStatus
 }

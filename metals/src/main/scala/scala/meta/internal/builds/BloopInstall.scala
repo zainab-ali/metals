@@ -72,6 +72,8 @@ final class BloopInstall(
       javaHome: Option[String],
   ): Future[WorkspaceLoadedStatus] = {
     persistChecksumStatus(Status.Started, buildTool)
+    val processOutStringBuilder = new StringBuilder()
+    val processErrStringBuilder = new StringBuilder()
     val processFuture = shellRunner
       .run(
         s"${buildTool.executableName} bloopInstall",
@@ -86,11 +88,19 @@ final class BloopInstall(
           "METALS_ENABLED" -> "true",
           "SCALAMETA_VERSION" -> BuildInfo.semanticdbVersion,
         ) ++ sys.env,
+        processOut = msg => {
+          scribe.info(msg)
+          processOutStringBuilder.append(msg)
+        },
+        processErr = msg => {
+          scribe.error(msg)
+          processErrStringBuilder.append(msg)
+        }
       )
       .map {
         case ExitCodes.Success => WorkspaceLoadedStatus.Installed
         case ExitCodes.Cancel => WorkspaceLoadedStatus.Cancelled
-        case result => WorkspaceLoadedStatus.Failed(result)
+        case result => WorkspaceLoadedStatus.Failed(result, processOutStringBuilder.result(), processErrStringBuilder.result())
       }
     processFuture.foreach { result =>
       try result.toChecksumStatus.foreach(persistChecksumStatus(_, buildTool))

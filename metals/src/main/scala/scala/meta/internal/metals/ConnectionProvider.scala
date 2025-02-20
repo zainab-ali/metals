@@ -1,4 +1,5 @@
 package scala.meta.internal.metals
+import scala.meta.internal.builds.WorkspaceLoadedStatus
 
 import java.nio.charset.Charset
 import java.util.UUID
@@ -612,10 +613,10 @@ class ConnectionProvider(
             )
         }
         change <- {
-          if (result.isInstalled) createSession(shutdownServer)
-          else if (result.isFailed) {
-            for {
-              change <-
+          result match {
+            case _ if result.isInstalled => createSession(shutdownServer)
+            case WorkspaceLoadedStatus.Failed(_, _, stderr) => {
+              val change =
                 if (
                   buildTools.isAutoConnectable(
                     buildToolProvider.optProjectRoot
@@ -634,7 +635,8 @@ class ConnectionProvider(
                     case _: BuildServerProvider =>
                       languageClient
                         .showMessageRequest(
-                          Messages.ImportProjectFailedSuggestBspSwitch.params()
+                          Messages.ImportProjectFailedSuggestBspSwitch
+                            .params()
                         )
                         .asScala
                         .flatMap {
@@ -647,8 +649,10 @@ class ConnectionProvider(
                   }
                   Future.successful(BuildChange.Failed)
                 }
-            } yield change
-          } else Future.successful(BuildChange.None)
+              change
+            }
+            case _ => Future.successful(BuildChange.None)
+          }
         }
       } yield change
     }
